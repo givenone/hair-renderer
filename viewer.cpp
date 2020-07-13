@@ -17,6 +17,7 @@
 #include "Hair.h"
 #include "controls.hpp"
 #include "shader.hpp"
+#include "objloader.hpp"
 
 #include <opencv2/opencv.hpp>
 
@@ -79,6 +80,8 @@ void render(std::vector<GLfloat> &vertex_data, std::vector<GLfloat> &vertex_colo
 	// Accept fragment if it closer to the camera than the former one
 	glDepthFunc(GL_LESS); 
 
+    glEnable(GL_CULL_FACE);
+
     //VAO
     GLuint VertexArrayID;
     glGenVertexArrays(1, &VertexArrayID);
@@ -115,6 +118,32 @@ void render(std::vector<GLfloat> &vertex_data, std::vector<GLfloat> &vertex_colo
         
         glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
 
+
+    // Read our .obj file
+	std::vector<glm::vec3> vertices;
+	std::vector<glm::vec2> uvs;
+	std::vector<glm::vec3> normals; // Won't be used at the moment.
+    
+    int hair_data_length = vertex_data.size();
+    // store data length of hair
+
+	bool res = loadOBJ("head_model.obj", vertices, uvs, normals);
+    printf("before : %d\n", vertex_data.size());
+    for(int i=0; i<vertices.size(); i++)
+    {
+        vertex_data.push_back(vertices[i][0]);
+        vertex_data.push_back(vertices[i][1]);
+        vertex_data.push_back(vertices[i][2]);
+    }
+    // insert triangle vertices
+    printf("before : %d\n", vertex_data.size());
+
+    std::vector<float> head_color(vertices.size(), 0.0);
+    printf("before : %d\n", vertex_color.size());
+    vertex_color.insert(vertex_color.end(), head_color.begin(), head_color.end());
+    printf("after : %d\n", vertex_color.size());
+    // head color : black.
+    
     GLfloat* g_vertex_buffer_data = vertex_data.data();
     GLuint vertexbuffer;
 	glGenBuffers(1, &vertexbuffer);
@@ -161,7 +190,8 @@ void render(std::vector<GLfloat> &vertex_data, std::vector<GLfloat> &vertex_colo
                 (void *) 0            // array buffer offset
         );
 
-        glDrawArrays(GL_LINES, 0, vertex_data.size()/3);
+        glDrawArrays(GL_LINES, 0, hair_data_length/3);
+        glDrawArrays(GL_TRIANGLES, hair_data_length/3, vertex_data.size()/3);
         printf("drawing done\n");
     }
     while(0);//(glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS && glfwWindowShouldClose(window) == 0 );
