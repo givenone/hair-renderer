@@ -237,6 +237,9 @@ void load_vertex(Hair &hair,  std::vector<GLfloat> &vertex_data, std::vector<GLf
     int cnt = 0;
    for (auto &strand: strands) {
 		auto strand_verts = strand.size();
+
+        if(strand_verts == 1) continue; // pass no strand case
+
         cnt++;
         vertex_data.push_back(strand[0][0]);
         vertex_data.push_back(strand[0][1]);
