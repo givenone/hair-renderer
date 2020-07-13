@@ -63,7 +63,7 @@ void setTarget(glm::highp_f64vec3 obj_target)
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-	currentRadius += yoffset * 100;
+	currentRadius += yoffset * 1;
 }
 
 
@@ -130,12 +130,12 @@ void computeMatricesFromInputs()
 	glm::mat3x3 rotmat = rotmat_x * rotmat_y;
 
 	position = rotmat * (glm::vec3(0.0, 0.0, currentRadius) - target) + target;
-	glm::vec3 up = rotmat * glm::vec3(0.0, -1.0, 0.0);
+	glm::vec3 up = rotmat * glm::vec3(0.0, 1.0, 0.0);
 
 	float FoV = initialFoV;
 
 	// Projection matrix : 45� Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-	ProjectionMatrix = glm::perspective(glm::radians(26.5f), float(6.0f / 6.0f), 0.1f, 100.0f);
+	ProjectionMatrix = glm::perspective(glm::radians(26.5f), float(6.0f / 6.0f), 0.1f, 2000.0f);
 	// Camera matrix
 	ViewMatrix       = glm::lookAt(
 								position,           // Camera is here

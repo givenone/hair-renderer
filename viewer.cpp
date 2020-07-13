@@ -62,18 +62,15 @@ void render(std::vector<GLfloat> &vertex_data, std::vector<GLfloat> &vertex_colo
     // Ensure we can capture the escape key being pressed below
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
    
-   /*
+   
     // GLFW callbacks to handle inputs
 	glfwSetScrollCallback(window, scroll_callback);
     glfwSetMouseButtonCallback(window, mouse_button_callback);
 
     // Set the mouse at the center of the screen
     glfwPollEvents();
-    glfwSetCursorPos(window, 1024/2, 768/2);
+    glfwSetCursorPos(window, 1280/2, 960/2);
 
-	// Dark blue background
-	glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
-*/
     glClearColor(0.4f, 0.4f, 0.4f, 1.0f);
 	// Enable depth test
 	glEnable(GL_DEPTH_TEST);
@@ -128,7 +125,7 @@ void render(std::vector<GLfloat> &vertex_data, std::vector<GLfloat> &vertex_colo
 	glGenBuffers(1, &colorbuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
 	glBufferData(GL_ARRAY_BUFFER, vertex_color.size() * sizeof(float), g_vertex_color_data, GL_STATIC_DRAW);
-    
+
     // Read our .obj file
 	std::vector<glm::vec3> vertices;
 	std::vector<glm::vec2> uvs;
@@ -168,11 +165,10 @@ void render(std::vector<GLfloat> &vertex_data, std::vector<GLfloat> &vertex_colo
 
     //std::vector<float> head_color(vertices.size(), 0.0);
     //vertex_color.insert(vertex_color.end(), head_color.begin(), head_color.end());
-
+    bool first = true;
     do{
         // Clear the screen. 
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-        glfwSwapBuffers(window);
 
         glUseProgram(programID);
 
@@ -240,20 +236,25 @@ void render(std::vector<GLfloat> &vertex_data, std::vector<GLfloat> &vertex_colo
 
         //glDrawArrays(GL_TRIANGLES, hair_data_length/3, vertex_data.size()/3);
         printf("drawing done\n");
-        //glfwSwapBuffers(window);
+        if(first) // save first image only.
+        {
+            saveimage(1280, 960);
+            first = false;
+        }
+        glfwSwapBuffers(window);
         glfwPollEvents();
 
     }
-    while(0);//(glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS && glfwWindowShouldClose(window) == 0 );
-    glDeleteVertexArrays(1, &VertexArrayID);
-    glfwPollEvents();
+    while(glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS && glfwWindowShouldClose(window) == 0 );
 
-    
+    //saveimage(1280, 960);
+
+    glDeleteVertexArrays(1, &VertexArrayID);
+    glfwPollEvents();    
     //glDeleteBuffers(1, &vertexbuffer);
     glDeleteProgram(programID);
     //glDeleteVertexArrays(1, &VertexArrayID);
 
-    saveimage(1280, 960);
     // Close OpenGL window and terminate GLFW
 	glfwTerminate();
 }
@@ -271,9 +272,9 @@ void saveimage(int width, int height)
             float R = pixels[j * 3 + i*width * 3 + 0];
             float G = pixels[j * 3 + i*width * 3 + 1];
             float B = pixels[j * 3 + i*width * 3 + 2];
-            result.at<cv::Vec3f>(i, j)[0] = R;
-            result.at<cv::Vec3f>(i, j)[1] = G;
-            result.at<cv::Vec3f>(i, j)[2] = B;
+            result.at<cv::Vec3f>(height-i-1, j)[0] = R;
+            result.at<cv::Vec3f>(height-i-1, j)[1] = G;
+            result.at<cv::Vec3f>(height-i-1, j)[2] = B;
         }
     }
     result = result * 255;
