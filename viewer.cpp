@@ -117,33 +117,6 @@ void render(std::vector<GLfloat> &vertex_data, std::vector<GLfloat> &vertex_colo
         glm::vec3 cam_pos = getCameraPosition();
         
         glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
-
-
-    // Read our .obj file
-	std::vector<glm::vec3> vertices;
-	std::vector<glm::vec2> uvs;
-	std::vector<glm::vec3> normals; // Won't be used at the moment.
-    
-    int hair_data_length = vertex_data.size();
-    // store data length of hair
-
-	bool res = loadOBJ("head_model.obj", vertices, uvs, normals);
-    printf("before : %d\n", vertex_data.size());
-    for(int i=0; i<vertices.size(); i++)
-    {
-        vertex_data.push_back(vertices[i][0]);
-        vertex_data.push_back(vertices[i][1]);
-        vertex_data.push_back(vertices[i][2]);
-    }
-    // insert triangle vertices
-    printf("before : %d\n", vertex_data.size());
-
-    std::vector<float> head_color(vertices.size(), 0.0);
-    printf("before : %d\n", vertex_color.size());
-    vertex_color.insert(vertex_color.end(), head_color.begin(), head_color.end());
-    printf("after : %d\n", vertex_color.size());
-    // head color : black.
-    
     GLfloat* g_vertex_buffer_data = vertex_data.data();
     GLuint vertexbuffer;
 	glGenBuffers(1, &vertexbuffer);
@@ -155,19 +128,60 @@ void render(std::vector<GLfloat> &vertex_data, std::vector<GLfloat> &vertex_colo
 	glGenBuffers(1, &colorbuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
 	glBufferData(GL_ARRAY_BUFFER, vertex_color.size() * sizeof(float), g_vertex_color_data, GL_STATIC_DRAW);
+    
+    // Read our .obj file
+	std::vector<glm::vec3> vertices;
+	std::vector<glm::vec2> uvs;
+	std::vector<glm::vec3> normals; // Won't be used at the moment.
+    
+    int hair_data_length = vertex_data.size();
+    // store data length of hair
+
+	bool res = loadOBJ("head_model.obj", vertices, uvs, normals);
+    //for(int i=0; i<vertices.size(); i++)
+    //{
+    //    vertex_data.push_back(vertices[i][0]);
+    //    vertex_data.push_back(vertices[i][1]);
+    //    vertex_data.push_back(vertices[i][2]);
+    //}
+    // insert triangle vertices
+
+    GLuint face_programID = LoadShaders( "normalShader.vertexshader", "normalShader.fragmentshader" );
+
+	// Face Shader :: Get a handle for our "MVP" uniform
+    glUseProgram(face_programID);
+	GLuint face_MatrixID = glGetUniformLocation(face_programID, "MVP");
+	GLuint face_ViewMatrixID = glGetUniformLocation(face_programID, "V");
+	GLuint face_ModelMatrixID = glGetUniformLocation(face_programID, "M");
+	GLuint LightID = glGetUniformLocation(face_programID, "LightPosition_worldspace");
+
+
+	GLuint face_vertexbuffer;
+	glGenBuffers(1, &face_vertexbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, face_vertexbuffer);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices[0], GL_STATIC_DRAW);
+
+    GLuint face_normalbuffer;
+	glGenBuffers(1, &face_normalbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, face_normalbuffer);
+	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_STATIC_DRAW);
+
+    //std::vector<float> head_color(vertices.size(), 0.0);
+    //vertex_color.insert(vertex_color.end(), head_color.begin(), head_color.end());
 
     do{
         // Clear the screen. 
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
         glfwSwapBuffers(window);
 
+        glUseProgram(programID);
+
         computeMatricesFromInputs();
 		ProjectionMatrix = getProjectionMatrix();
 		ViewMatrix = getViewMatrix();
-        MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+        MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;        
         glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
-
-
+        
         glEnableVertexAttribArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
         glVertexAttribPointer(
@@ -191,8 +205,44 @@ void render(std::vector<GLfloat> &vertex_data, std::vector<GLfloat> &vertex_colo
         );
 
         glDrawArrays(GL_LINES, 0, hair_data_length/3);
-        glDrawArrays(GL_TRIANGLES, hair_data_length/3, vertex_data.size()/3);
+
+        glUseProgram(face_programID);
+
+        glUniformMatrix4fv(face_MatrixID, 1, GL_FALSE, &MVP[0][0]);
+        glUniformMatrix4fv(face_ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+		glUniformMatrix4fv(face_ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
+        glm::vec3 lightPos = glm::vec3(10,3,4);
+		glUniform3f(LightID, lightPos.x, lightPos.y, lightPos.z);
+
+        glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, face_vertexbuffer);
+		glVertexAttribPointer(
+			0,                  // attribute
+			3,                  // size
+			GL_FLOAT,           // type
+			GL_FALSE,           // normalized?
+			0,                  // stride
+			(void*)0            // array buffer offset
+		);
+
+        glEnableVertexAttribArray(2);
+		glBindBuffer(GL_ARRAY_BUFFER, face_normalbuffer);
+		glVertexAttribPointer(
+			2,                                // attribute
+			3,                                // size
+			GL_FLOAT,                         // type
+			GL_FALSE,                         // normalized?
+			0,                                // stride
+			(void*)0                          // array buffer offset
+		);
+
+        glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+
+        //glDrawArrays(GL_TRIANGLES, hair_data_length/3, vertex_data.size()/3);
         printf("drawing done\n");
+        //glfwSwapBuffers(window);
+        glfwPollEvents();
+
     }
     while(0);//(glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS && glfwWindowShouldClose(window) == 0 );
     glDeleteVertexArrays(1, &VertexArrayID);
