@@ -53,6 +53,12 @@ bool loadOBJ(
 		if ( strcmp( lineHeader, "v" ) == 0 ){
 			glm::vec3 vertex;
 			fscanf(file, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z );
+			
+			//temporary transformation
+			vertex.x = vertex.x * 0.0012;
+			vertex.y = vertex.y * 0.0012 + 1.7;
+			vertex.z = vertex.z * 0.0012 + 0.1;
+
 			temp_vertices.push_back(vertex);
 
 
@@ -138,9 +144,6 @@ bool loadOBJ(
 		{
 			out_normals .push_back(glm::normalize(temp_normals[vertexIndex - 1]));
 		}
-
-		printf("%f %f %f\n", out_normals[out_normals.size()-1].x, out_normals[out_normals.size()-1].y, out_normals[out_normals.size()-1].z);
-		
 	}
 	fclose(file);
 	return true;
