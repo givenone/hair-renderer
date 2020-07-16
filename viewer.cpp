@@ -18,6 +18,7 @@
 #include "controls.hpp"
 #include "shader.hpp"
 #include "objloader.hpp"
+#include "texture.hpp"
 
 #include <opencv2/opencv.hpp>
 
@@ -134,14 +135,7 @@ void render(std::vector<GLfloat> &vertex_data, std::vector<GLfloat> &vertex_colo
     int hair_data_length = vertex_data.size();
     // store data length of hair
 
-	bool res = loadOBJ("head_model.obj", vertices, uvs, normals);
-    //for(int i=0; i<vertices.size(); i++)
-    //{
-    //    vertex_data.push_back(vertices[i][0]);
-    //    vertex_data.push_back(vertices[i][1]);
-    //    vertex_data.push_back(vertices[i][2]);
-    //}
-    // insert triangle vertices
+	bool res = loadOBJ("data/output.obj", vertices, uvs, normals);
 
     GLuint face_programID = LoadShaders( "normalShader.vertexshader", "normalShader.fragmentshader" );
 
@@ -152,11 +146,18 @@ void render(std::vector<GLfloat> &vertex_data, std::vector<GLfloat> &vertex_colo
 	GLuint face_ModelMatrixID = glGetUniformLocation(face_programID, "M");
 	GLuint LightID = glGetUniformLocation(face_programID, "LightPosition_worldspace");
 
+    GLuint NormalTexture = loadBMP_custom("data/output.isomap.bmp");
+    GLuint NormalTextureID  = glGetUniformLocation(face_programID, "myTextureSampler");
 
 	GLuint face_vertexbuffer;
 	glGenBuffers(1, &face_vertexbuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, face_vertexbuffer);
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices[0], GL_STATIC_DRAW);
+
+    GLuint face_uvbuffer;
+	glGenBuffers(1, &face_uvbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, face_uvbuffer);
+	glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(glm::vec2), &uvs[0], GL_STATIC_DRAW);
 
     GLuint face_normalbuffer;
 	glGenBuffers(1, &face_normalbuffer);
@@ -200,15 +201,22 @@ void render(std::vector<GLfloat> &vertex_data, std::vector<GLfloat> &vertex_colo
                 (void *) 0            // array buffer offset
         );
 
-        glDrawArrays(GL_LINES, 0, hair_data_length/3);
+        //glDrawArrays(GL_LINES, 0, hair_data_length/3);
 
         glUseProgram(face_programID);
 
         glUniformMatrix4fv(face_MatrixID, 1, GL_FALSE, &MVP[0][0]);
         glUniformMatrix4fv(face_ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
 		glUniformMatrix4fv(face_ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
-        glm::vec3 lightPos = glm::vec3(10,3,4);
+        glm::vec3 lightPos = glm::vec3(100,100,0);
 		glUniform3f(LightID, lightPos.x, lightPos.y, lightPos.z);
+
+
+        // texture
+        glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, NormalTexture);
+		// Set our "myTextureSampler" sampler to use Texture Unit 0
+		glUniform1i(NormalTextureID, 0);
 
         glEnableVertexAttribArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, face_vertexbuffer);
@@ -219,6 +227,18 @@ void render(std::vector<GLfloat> &vertex_data, std::vector<GLfloat> &vertex_colo
 			GL_FALSE,           // normalized?
 			0,                  // stride
 			(void*)0            // array buffer offset
+		);
+
+        // 2nd attribute buffer : UVs
+		glEnableVertexAttribArray(1);
+		glBindBuffer(GL_ARRAY_BUFFER, face_uvbuffer);
+		glVertexAttribPointer(
+			1,                                // attribute
+			2,                                // size
+			GL_FLOAT,                         // type
+			GL_FALSE,                         // normalized?
+			0,                                // stride
+			(void*)0                          // array buffer offset
 		);
 
         glEnableVertexAttribArray(2);
@@ -235,7 +255,7 @@ void render(std::vector<GLfloat> &vertex_data, std::vector<GLfloat> &vertex_colo
         glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 
         //glDrawArrays(GL_TRIANGLES, hair_data_length/3, vertex_data.size()/3);
-        printf("drawing done\n");
+        //printf("drawing done\n");
         if(first) // save first image only.
         {
             saveimage(1280, 960);
@@ -326,7 +346,7 @@ void load_vertex(Hair &hair,  std::vector<GLfloat> &vertex_data, std::vector<GLf
 int main(int argc, char **argv) {
 
 	if (argc != 2) {
-		puts("usage: ./hair2obj <filename.data>");
+		puts("usage: ./hairviewer <filename.data>");
 		exit(1);
 	}
 

@@ -1,1 +1,1 @@
-g++ src/Hair.cc src/shader.cpp src/controls.cpp src/objloader.cpp viewer.cpp -o hairviewer -Iinclude -Ivendor/trimesh2/include -lglfw -lglut -lGL -lGLU -lGLEW `pkg-config --cflags --libs opencv`
+g++ src/Hair.cc src/shader.cpp src/controls.cpp src/objloader.cpp src/texture.cpp viewer.cpp -o hairviewer -Iinclude -Ivendor/trimesh2/include -lglfw -lglut -lGL -lGLU -lGLEW `pkg-config --cflags --libs opencv`
