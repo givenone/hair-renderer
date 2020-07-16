@@ -252,13 +252,13 @@ void render(std::vector<GLfloat> &vertex_data, std::vector<GLfloat> &vertex_colo
 			(void*)0                          // array buffer offset
 		);
 
-        glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+        //glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 
         //glDrawArrays(GL_TRIANGLES, hair_data_length/3, vertex_data.size()/3);
         //printf("drawing done\n");
         if(first) // save first image only.
         {
-            saveimage(1280, 960);
+            //saveimage(1280, 960);
             first = false;
         }
         glfwSwapBuffers(window);

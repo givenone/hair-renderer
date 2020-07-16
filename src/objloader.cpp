@@ -56,7 +56,7 @@ bool loadOBJ(
 			temp_vertices.push_back(vertex);
 
 
-			glm::vec3 vertex_normal = glm::vec3(0, 0, 0);
+			glm::vec3 vertex_normal = glm::vec3(0.0, 0.0, 0.0);
 			temp_normals.push_back(vertex_normal); // temp normal
 			temp_normals_cnt.push_back(0); // normal count.
 
@@ -85,19 +85,23 @@ bool loadOBJ(
 			uvIndices    .push_back(uvIndex[1]);
 			uvIndices    .push_back(uvIndex[2]);
 
-			glm::vec3 v1 = temp_vertices[vertexIndex[1]] - temp_vertices[vertexIndex[0]];
-			glm::vec3 v2 = temp_vertices[vertexIndex[2]] - temp_vertices[vertexIndex[0]];
+			glm::vec3 v1 = temp_vertices[vertexIndex[1] - 1] - temp_vertices[vertexIndex[0] - 1];
+			glm::vec3 v2 = temp_vertices[vertexIndex[2] - 1] - temp_vertices[vertexIndex[0] - 1];
 
-			glm::vec3 n = glm::cross(v1, v2);\
-			glm::normalize(n);
+			glm::vec3 n = glm::cross(v1, v2);
 
-			temp_normals[vertexIndices[0]] += n;
-			temp_normals[vertexIndices[1]] += n;
-			temp_normals[vertexIndices[2]] += n;
+			n = glm::normalize(n);
+			//printf("b : %f %f %f\n", temp_normals[vertexIndex[0] - 1].x, temp_normals[vertexIndex[0] - 1].y, temp_normals[vertexIndex[0] - 1].z);
+			//printf("n : %f %f %f\n", n.x, n.y, n.z);
+			temp_normals[vertexIndex[0] - 1] += n;
+			temp_normals[vertexIndex[1] - 1] += n;
+			temp_normals[vertexIndex[2] - 1] += n;
 			
-			temp_normals[vertexIndices[0]] ++;
-			temp_normals[vertexIndices[1]] ++;
-			temp_normals[vertexIndices[2]] ++;
+			//printf("a : %f %f %f\n", temp_normals[vertexIndex[0] - 1].x, temp_normals[vertexIndex[0] - 1].y, temp_normals[vertexIndex[0] - 1].z);
+
+			temp_normals_cnt[vertexIndex[0] - 1] ++;
+			temp_normals_cnt[vertexIndex[1] - 1] ++;
+			temp_normals_cnt[vertexIndex[2] - 1] ++;
 			
 		}else{
 			// Probably a comment, eat up the rest of the line
@@ -125,16 +129,17 @@ bool loadOBJ(
 		out_uvs     .push_back(uv);
 		//out_normals .push_back(normal);
 	
-		if(temp_normals_cnt[vertexIndex] == 0)
+		if(temp_normals_cnt[vertexIndex - 1] == 0)
 		{
 			out_normals .push_back(glm::vec3(0,0,1));
 		}
 
 		else
 		{
-			glm::normalize(temp_normals[vertexIndex]);
-			out_normals .push_back(temp_normals[vertexIndex]);
+			out_normals .push_back(glm::normalize(temp_normals[vertexIndex - 1]));
 		}
+
+		printf("%f %f %f\n", out_normals[out_normals.size()-1].x, out_normals[out_normals.size()-1].y, out_normals[out_normals.size()-1].z);
 		
 	}
 	fclose(file);
