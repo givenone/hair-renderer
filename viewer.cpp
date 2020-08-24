@@ -201,14 +201,14 @@ void render(std::vector<GLfloat> &vertex_data, std::vector<GLfloat> &vertex_colo
                 (void *) 0            // array buffer offset
         );
 
-        //glDrawArrays(GL_LINES, 0, hair_data_length/3);
+        glDrawArrays(GL_LINES, 0, hair_data_length/3);
 
         glUseProgram(face_programID);
 
         glUniformMatrix4fv(face_MatrixID, 1, GL_FALSE, &MVP[0][0]);
         glUniformMatrix4fv(face_ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
 		glUniformMatrix4fv(face_ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
-        glm::vec3 lightPos = glm::vec3(100,100,0);
+        glm::vec3 lightPos = glm::vec3(0 , 1, 3);
 		glUniform3f(LightID, lightPos.x, lightPos.y, lightPos.z);
 
 
@@ -252,7 +252,7 @@ void render(std::vector<GLfloat> &vertex_data, std::vector<GLfloat> &vertex_colo
 			(void*)0                          // array buffer offset
 		);
 
-        //glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+        glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 
         //glDrawArrays(GL_TRIANGLES, hair_data_length/3, vertex_data.size()/3);
         //printf("drawing done\n");

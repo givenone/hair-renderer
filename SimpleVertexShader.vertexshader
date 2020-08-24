@@ -17,8 +17,11 @@ uniform mat4 MVP;
 void main(){
   // Output position of the vertex, in clip space : MVP * position
   gl_Position =  MVP * vec4(vertexPosition_modelspace,1);
-  //float color = (3.0-dot(vertexPosition_modelspace-hair_center, sight_vec)/hair_radius)*0.25;
-  float color=vertex_color;
-  fragmentColor = vec4(0.2 * color, 0.2 * color, 0.2 *color, 1-(0.5*color) );
+  float hair_radius = 0.08;
+  vec3 sight_vec = vec3(0,0,1);
+  vec3 hair_center = vec3(0, 1.7, 0.1);
+  float color = min(0.8, vertex_color * (1.0-dot(vertexPosition_modelspace-hair_center, sight_vec)/hair_radius));
+  //float color=vertex_color;
+  fragmentColor = vec4(0.2 * color, 0.2 * color, 0.2 *color, 1-color );
   //fragmentColor = vertex_color;
 }
