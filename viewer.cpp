@@ -28,7 +28,7 @@ std::string vertexshader_fn ="SimpleVertexShader.vertexshader";
 std::string fragmentshader_fn = "SimpleFragmentShader.fragmentshader";
 GLFWwindow* window;
 
-void render(std::vector<GLfloat> &vertex_data, std::vector<GLfloat> &vertex_color)
+void render(std::vector<GLfloat> &vertex_data, std::vector<GLfloat> &vertex_color, std::vector<glm::vec3> &vertex_tangent)
 {
     glewExperimental = true; // Needed for core profile
     if( !glfwInit() )
@@ -46,7 +46,7 @@ void render(std::vector<GLfloat> &vertex_data, std::vector<GLfloat> &vertex_colo
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
 
-    window = glfwCreateWindow(1280, 960, "Geometric Image Viewer", NULL, NULL); // Windowed
+    window = glfwCreateWindow(1200, 960, "Geometric Image Viewer", NULL, NULL); // Windowed
     if( window == NULL ){
         fprintf( stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
         glfwTerminate();
@@ -70,7 +70,7 @@ void render(std::vector<GLfloat> &vertex_data, std::vector<GLfloat> &vertex_colo
 
     // Set the mouse at the center of the screen
     glfwPollEvents();
-    glfwSetCursorPos(window, 1280/2, 960/2);
+    glfwSetCursorPos(window, 1200/2, 960/2);
 
     glClearColor(0.4f, 0.4f, 0.4f, 1.0f);
 	// Enable depth test
@@ -126,6 +126,11 @@ void render(std::vector<GLfloat> &vertex_data, std::vector<GLfloat> &vertex_colo
 	glGenBuffers(1, &colorbuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
 	glBufferData(GL_ARRAY_BUFFER, vertex_color.size() * sizeof(float), g_vertex_color_data, GL_STATIC_DRAW);
+
+	GLuint tangentbuffer;
+	glGenBuffers(1, &tangentbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, tangentbuffer);
+	glBufferData(GL_ARRAY_BUFFER, vertex_tangent.size() * sizeof(glm::vec3), &vertex_tangent[0], GL_STATIC_DRAW);
 
     // Read our .obj file
 	std::vector<glm::vec3> vertices;
@@ -200,6 +205,20 @@ void render(std::vector<GLfloat> &vertex_data, std::vector<GLfloat> &vertex_colo
                 0,                  // stride
                 (void *) 0            // array buffer offset
         );
+
+        glEnableVertexAttribArray(2);
+		glBindBuffer(GL_ARRAY_BUFFER, tangentbuffer);
+		glVertexAttribPointer(
+			2,                  // attribute
+			3,                  // size
+			GL_FLOAT,           // type
+			GL_FALSE,           // normalized?
+			0,                  // stride
+			(void*)0            // array buffer offset
+		);
+
+
+        glLineWidth(5.0f);
 
         glDrawArrays(GL_LINES, 0, hair_data_length/3);
 
@@ -302,11 +321,13 @@ void saveimage(int width, int height)
     delete pixels;
 }
 
-void load_vertex(Hair &hair,  std::vector<GLfloat> &vertex_data, std::vector<GLfloat> &vertex_color )
+void load_vertex(Hair &hair,  std::vector<GLfloat> &vertex_data, std::vector<GLfloat> &vertex_color, std::vector<glm::vec3> &vertex_tangent)
 {
     auto strands = hair.strands;
     int cnt = 0;
-   for (auto &strand: strands) {
+    glm::vec3 point; // previous point
+
+    for (auto &strand: strands) {
 		auto strand_verts = strand.size();
 
         if(strand_verts == 1) continue; // pass no strand case
@@ -318,6 +339,9 @@ void load_vertex(Hair &hair,  std::vector<GLfloat> &vertex_data, std::vector<GLf
 
         vertex_color.push_back((float)cnt);
 
+        point = glm::vec3(strand[0][0], strand[0][1], strand[0][2]); // initial point
+        vertex_tangent.push_back(glm::vec3(0, 0, 1)); // tangent is (0, 0, 1) on initial point.
+
 		for (size_t i = 1; i < strand_verts; ++i) {
             vertex_data.push_back(strand[i][0]);
             vertex_data.push_back(strand[i][1]);
@@ -325,6 +349,9 @@ void load_vertex(Hair &hair,  std::vector<GLfloat> &vertex_data, std::vector<GLf
 
             vertex_color.push_back((float)cnt);
 
+            vertex_tangent.push_back(glm::normalize(point - glm::vec3(strand[i][0], strand[i][1], strand[i][2]))); // tangent vector
+            point = glm::vec3(strand[i][0], strand[i][1], strand[i][2]); // update previous point
+            
             if(i < strand_verts -1)
             {
                 vertex_data.push_back(strand[i][0]);
@@ -332,6 +359,8 @@ void load_vertex(Hair &hair,  std::vector<GLfloat> &vertex_data, std::vector<GLf
                 vertex_data.push_back(strand[i][2]);
 
                 vertex_color.push_back((float)cnt);
+                vertex_tangent.push_back(glm::normalize(point - glm::vec3(strand[i][0], strand[i][1], strand[i][2]))); // tangent vector
+                point = glm::vec3(strand[i][0], strand[i][1], strand[i][2]); // update previous point                
             }
 		}
 
@@ -361,7 +390,8 @@ int main(int argc, char **argv) {
 	}
 
     std::vector <GLfloat> hair_vertex_data, hair_color;
-    load_vertex(h, hair_vertex_data, hair_color);
-    render(hair_vertex_data, hair_color);
+    std::vector <glm::vec3> hair_tangent;
+    load_vertex(h, hair_vertex_data, hair_color, hair_tangent);
+    render(hair_vertex_data, hair_color, hair_tangent);
 	return 0;
 }
