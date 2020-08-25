@@ -30,7 +30,8 @@ std::string vertexshader_fn ="SimpleVertexShader.vertexshader";
 std::string fragmentshader_fn = "SimpleFragmentShader.fragmentshader";
 GLFWwindow* window;
 
-void render(std::vector<GLfloat> &vertex_data, std::vector<GLfloat> &vertex_color, std::vector<GLfloat> &vertex_noise, std::vector<glm::vec3> &vertex_tangent)
+void render(std::vector<GLfloat> &vertex_data, std::vector<GLfloat> &vertex_color, 
+std::vector<GLfloat> &vertex_noise, std::vector<glm::vec3> &vertex_tangent, char* objpath)
 {
     glewExperimental = true; // Needed for core profile
     if( !glfwInit() )
@@ -48,7 +49,7 @@ void render(std::vector<GLfloat> &vertex_data, std::vector<GLfloat> &vertex_colo
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
 
-    window = glfwCreateWindow(1200, 960, "Geometric Image Viewer", NULL, NULL); // Windowed
+    window = glfwCreateWindow(1440, 1080, "Geometric Image Viewer", NULL, NULL); // Windowed
     if( window == NULL ){
         fprintf( stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
         glfwTerminate();
@@ -72,7 +73,7 @@ void render(std::vector<GLfloat> &vertex_data, std::vector<GLfloat> &vertex_colo
 
     // Set the mouse at the center of the screen
     glfwPollEvents();
-    glfwSetCursorPos(window, 1200/2, 960/2);
+    glfwSetCursorPos(window, 1440/2, 1080/2);
 
     glClearColor(0.4f, 0.4f, 0.4f, 1.0f);
 	// Enable depth test
@@ -149,7 +150,8 @@ void render(std::vector<GLfloat> &vertex_data, std::vector<GLfloat> &vertex_colo
     int hair_data_length = vertex_data.size();
     // store data length of hair
 
-	bool res = loadOBJ("data/output.obj", vertices, uvs, normals);
+    std::string name(objpath); 
+	bool res = loadOBJ( (name+".obj").c_str(), vertices, uvs, normals);
 
     GLuint face_programID = LoadShaders( "normalShader.vertexshader", "normalShader.fragmentshader" );
 
@@ -160,7 +162,7 @@ void render(std::vector<GLfloat> &vertex_data, std::vector<GLfloat> &vertex_colo
 	GLuint face_ModelMatrixID = glGetUniformLocation(face_programID, "M");
 	GLuint LightID = glGetUniformLocation(face_programID, "LightPosition_worldspace");
 
-    GLuint NormalTexture = loadBMP_custom("data/output.isomap.bmp");
+    GLuint NormalTexture = loadBMP_custom((name+".isomap.bmp").c_str());
     GLuint NormalTextureID  = glGetUniformLocation(face_programID, "myTextureSampler");
 
 	GLuint face_vertexbuffer;
@@ -403,8 +405,8 @@ std::vector<GLfloat> &vertex_noise, std::vector<glm::vec3> &vertex_tangent)
 
 int main(int argc, char **argv) {
 
-	if (argc != 2) {
-		puts("usage: ./hairviewer <filename.data>");
+	if (argc != 3) {
+		puts("usage: ./hairviewer <filename.data> <obj path>");
 		exit(1);
 	}
 
@@ -421,6 +423,6 @@ int main(int argc, char **argv) {
     std::vector <GLfloat> hair_vertex_data, hair_color, hair_noise;
     std::vector <glm::vec3> hair_tangent;
     load_vertex(h, hair_vertex_data, hair_color, hair_noise, hair_tangent);
-    render(hair_vertex_data, hair_color, hair_noise, hair_tangent);
+    render(hair_vertex_data, hair_color, hair_noise, hair_tangent, argv[2]);
 	return 0;
 }
